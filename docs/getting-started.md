@@ -6,7 +6,7 @@ This guide installs Pomerado, connects it to your MCP client and builds a first 
 
 - macOS or Linux.
 - Node 24.21 or a later Node 24 release. `node --version` should print `v24.21.0` or higher, below `v25`.
-- An OpenAI API key for an account that can use `gpt-6.1-sol` and `gpt-6-luna`. Pomerado calls OpenAI models to build and review integrations. Your agent can run on any model.
+- An OpenAI API key for an account that can use `gpt-6.1-sol` and `gpt-6-luna`, or an OpenAI-compatible router key (such as 9router, OpenRouter, LiteLLM) with custom models configured. Pomerado calls models to build and review integrations. Your agent can run on any model.
 - An MCP client that runs local stdio servers.
 
 ## Install
@@ -41,6 +41,29 @@ Pomerado is a standard MCP stdio server.
 - `--root` is the folder where Pomerado saves them. It defaults to `./integrations` in the server's working folder, and clients pick that folder differently. Use an absolute path.
 - The server needs `OPENAI_API_KEY` in its environment. Many clients pass servers only a short list of variables, so check your client below.
 - Starting the server and listing its tools launches no browser and calls no model.
+
+### Custom models and OpenAI-compatible routers
+
+By default, Pomerado uses internal OpenAI model IDs for minting and Guardian verification. You can direct Pomerado to any OpenAI-compatible gateway or router (such as 9router, OpenRouter, or LiteLLM) and customize the models used:
+
+- `OPENAI_BASE_URL` or `--base-url URL`: Sets the OpenAI-compatible API base URL (e.g. `https://api.9router.com/v1`). Setting a non-OpenAI base URL automatically enables router compatibility mode.
+- `POMERADO_MODEL` or `--model NAME`: Sets the default model for both the minter and Guardian reviewer.
+- `POMERADO_MINTER_MODEL` or `--minter-model NAME`: Overrides the model used by the minter agent (default: `gpt-6.1-sol`).
+- `POMERADO_GUARDIAN_MODEL` or `--guardian-model NAME`: Overrides the model used by the Guardian reviewer (default: `gpt-6-luna`).
+- `POMERADO_COMPAT_MODE` or `--compat`: Toggles compatibility mode. When enabled, proprietary OpenAI Responses API parameters (such as `reasoning: { summary }`, `reasoning.encrypted_content` include flags, `prompt_cache_options`, cache breakpoints, and `tool_choice.type="allowed_tools"`) are sanitized so standard OpenAI-compatible endpoints do not return 400 Bad Request.
+- `POMERADO_FAST` or `--fast`: Enables fast mode. Skips Guardian LLM reviews (zero LLM calls for verification) and sets live test pass threshold to 0%, cutting token usage by 50-70% and accelerating minting.
+- `POMERADO_SKIP_GUARDIAN` or `--skip-guardian`: Skips Guardian LLM reviews independently without changing the live test threshold.
+- `POMERADO_TEST_THRESHOLD` or `--test-threshold N`: Sets the required live test pass rate percentage (0-100, default 70).
+- `POMERADO_ENDPOINT` or `--endpoint URL`: Attaches to a remote Playwright websocket endpoint (e.g. `ws://browserless:3000?token=...`).
+
+Example using custom models with 9router in fast mode:
+```sh
+pomerado-mcp mint --root ~/pomerado-integrations \
+  --base-url "https://api.9router.com/v1" \
+  --model "gpt-4o" \
+  --compat \
+  --fast
+```
 
 ## Client settings
 

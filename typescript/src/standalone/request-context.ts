@@ -11,6 +11,9 @@ import {
   type ReviewTurn,
 } from "../guardian/review.js";
 import { makeOpenAIReviewer, nativeExecutionEnvironment } from "../guardian/openai.js";
+import { makeFastReviewer } from "../guardian/fast-reviewer.js";
+import { isFastMode, isSkipGuardian } from "../models/models.js";
+import { setReviewPassPercent } from "../mint/live-tests.js";
 import {
   answersForReview,
   type AnsweredQuestion,
@@ -292,18 +295,36 @@ export const requestContext = (session: StandaloneSession, request: PomeradoRequ
     let siteSince = 0;
     /** The request's own sign-in origins, which belong to its first site only. */
     let authenticationOrigins: readonly string[] = request.authenticationOrigins ?? [];
+    const effectiveThreshold =
+      options.testThreshold !== undefined
+        ? options.testThreshold
+        : options.fast === true || isFastMode()
+          ? 0
+          : undefined;
+    if (effectiveThreshold !== undefined) {
+      setReviewPassPercent(effectiveThreshold);
+    }
     const signedIn = () =>
       executions
         .slice(siteSince)
         .some((execution) => execution.authentication?.state === "authenticated");
-    const guardian = makeGuardian(
-      refusalsOnHostGapsFail({
-        ...makeOpenAIReviewer(policy, false, {
+    const useFastGuardian =
+      options.skipGuardian !== undefined
+        ? options.skipGuardian
+        : options.fast !== undefined
+          ? options.fast
+          : isSkipGuardian() || isFastMode();
+    const innerReviewer = useFastGuardian
+      ? makeFastReviewer()
+      : makeOpenAIReviewer(policy, false, {
           executionEnvironment: nativeExecutionEnvironment,
           ...(options.guardianProvider === undefined
             ? {}
             : { modelProvider: options.guardianProvider }),
-        }),
+        });
+    const guardian = makeGuardian(
+      refusalsOnHostGapsFail({
+        ...innerReviewer,
         retry: guardianOutageRetry,
       }),
       undefined,

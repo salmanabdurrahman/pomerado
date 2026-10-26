@@ -8,7 +8,9 @@ export type GuardianReasoningEffort = "low" | "medium";
 
 /** Execution and question reviews share the user's selected Guardian configuration. */
 export const guardianModel = {
-  model: lunaModel,
+  get model(): string {
+    return lunaModel;
+  },
   modelSettings: { store: false, reasoning: { effort: "medium" as GuardianReasoningEffort } },
 };
 

@@ -1,0 +1,52 @@
+services:
+  browserless:
+    image: ghcr.io/browserless/chromium:latest
+    container_name: pomerado-browserless
+    restart: unless-stopped
+    shm_size: "1gb"
+    ports:
+      - "${BROWSERLESS_BIND:-127.0.0.1}:3000:3000"
+    environment:
+      - TOKEN=${BROWSERLESS_TOKEN:-pomerado-secret-token}
+      - MAX_CONCURRENT_SESSIONS=3
+      - PREBOOT_CHROME=true
+      - KEEP_ALIVE=true
+      - CONNECTION_TIMEOUT=60000
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+    networks:
+      - pomerado-net
+
+  pomerado:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pomerado-mcp
+    restart: unless-stopped
+    depends_on:
+      - browserless
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - POMERADO_MODEL=${POMERADO_MODEL:-}
+      - POMERADO_MINTER_MODEL=${POMERADO_MINTER_MODEL:-}
+      - POMERADO_GUARDIAN_MODEL=${POMERADO_GUARDIAN_MODEL:-}
+      - POMERADO_COMPAT_MODE=${POMERADO_COMPAT_MODE:-1}
+      - POMERADO_FAST=${POMERADO_FAST:-1}
+      - POMERADO_TEST_THRESHOLD=${POMERADO_TEST_THRESHOLD:-0}
+      - POMERADO_ENDPOINT=ws://browserless:3000?token=${BROWSERLESS_TOKEN:-pomerado-secret-token}
+    volumes:
+      - pomerado-data:/integrations
+    command: ["sleep", "infinity"]
+    networks:
+      - pomerado-net
+
+networks:
+  pomerado-net:
+    name: pomerado-net
+
+volumes:
+  pomerado-data:
+    name: pomerado-integrations

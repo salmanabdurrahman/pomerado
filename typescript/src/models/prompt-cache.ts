@@ -1,4 +1,9 @@
 import type { AgentInputItem, ModelRequest, ModelSettings } from "@openai/agents";
+import {
+  isAllowedToolsDisabled,
+  isDeveloperRoleDisabled,
+  isPromptCacheDisabled,
+} from "./models.js";
 
 /**
  * Prompt caching on the Responses API. A request reads the longest cached prefix that ends at a
@@ -33,14 +38,19 @@ export interface PromptCacheOptions {
 export const withPromptCache = (
   settings: ModelSettings,
   { key, ...options }: PromptCacheOptions,
-): ModelSettings => ({
-  ...settings,
-  providerData: {
-    ...settings.providerData,
-    prompt_cache_options: options,
-    ...(key === undefined ? {} : { prompt_cache_key: key }),
-  },
-});
+): ModelSettings => {
+  if (isPromptCacheDisabled()) {
+    return settings;
+  }
+  return {
+    ...settings,
+    providerData: {
+      ...settings.providerData,
+      prompt_cache_options: options,
+      ...(key === undefined ? {} : { prompt_cache_key: key }),
+    },
+  };
+};
 
 /**
  * A developer message whose text parts end at an explicit cache breakpoint with `ttl`. The SDK
@@ -52,15 +62,18 @@ export const cachedDeveloperItem = (
   ttl: PromptCacheTtl,
 ): AgentInputItem => {
   const last = texts.length - 1;
+  const includeBreakpoint = !isPromptCacheDisabled();
   return {
     type: "unknown",
     providerData: {
       type: "message",
-      role: "developer",
+      role: isDeveloperRoleDisabled() ? "system" : "developer",
       content: texts.map((text, index) => ({
         type: "input_text",
         text,
-        ...(index === last ? { prompt_cache_breakpoint: { mode: "explicit", ttl } } : {}),
+        ...(includeBreakpoint && index === last
+          ? { prompt_cache_breakpoint: { mode: "explicit", ttl } }
+          : {}),
       })),
     },
   };
@@ -115,6 +128,16 @@ export const withAllowedTools = (
   if (choice !== undefined && choice !== "auto" && choice !== "required") return request;
   const tools = request.tools.filter((tool) => allowed(tool.name));
   if (tools.length === request.tools.length) return request;
+  if (isAllowedToolsDisabled()) {
+    return {
+      ...request,
+      tools,
+      modelSettings: {
+        ...request.modelSettings,
+        ...(choice === undefined ? {} : { toolChoice: choice }),
+      },
+    };
+  }
   return {
     ...request,
     modelSettings: {
@@ -138,6 +161,9 @@ export const withAllowedTools = (
  * and changes no caching.
  */
 export const withCacheComparison = (request: ModelRequest, responseId: string): ModelRequest => {
+  if (isPromptCacheDisabled()) {
+    return request;
+  }
   const providerData = request.modelSettings.providerData;
   const options: unknown = providerData?.["prompt_cache_options"];
   return {

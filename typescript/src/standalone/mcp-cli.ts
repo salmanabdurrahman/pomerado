@@ -9,6 +9,7 @@ import { localError, localPromise } from "../execution/local-path.js";
 import { readIntegration } from "./artifact-files.js";
 import { prepareIntegration } from "./mcp-package.js";
 import { makeIntegrationMcp, makePomeradoMcp } from "./mcp-server.js";
+import { configureModels } from "../models/models.js";
 import type { PomeradoOptions } from "./contracts.js";
 
 const usage = `Pomerado MCP
@@ -17,8 +18,16 @@ const usage = `Pomerado MCP
   pomerado-mcp serve --artifact DIRECTORY
 
 Options
-  --endpoint URL     Attach to native Playwright
-  --headed           Show local Chromium
+  --endpoint URL           Attach to native Playwright (or set POMERADO_ENDPOINT)
+  --headed                 Show local Chromium
+  --base-url URL           OpenAI-compatible API base URL (or set OPENAI_BASE_URL)
+  --model NAME             Default model for both minter and Guardian (or set POMERADO_MODEL)
+  --minter-model NAME      Model for minter (or set POMERADO_MINTER_MODEL)
+  --guardian-model NAME    Model for Guardian (or set POMERADO_GUARDIAN_MODEL)
+  --compat                 Enable compatibility mode for custom routers (strips proprietary reasoning/cache)
+  --fast                   Fast mode: skip Guardian verification and set test threshold to 0%
+  --skip-guardian          Skip Guardian verification without altering test threshold
+  --test-threshold N       Live test pass threshold percentage (0-100, default 70)
 
 The mint root defaults to ./integrations. Supply model credentials in the environment to
 mint. Serving makes no model request and needs no model credentials.
@@ -59,6 +68,14 @@ export const runMcpCli = (
               artifact: { type: "string" },
               endpoint: { type: "string" },
               headed: { type: "boolean" },
+              "base-url": { type: "string" },
+              model: { type: "string" },
+              "minter-model": { type: "string" },
+              "guardian-model": { type: "string" },
+              compat: { type: "boolean" },
+              fast: { type: "boolean" },
+              "skip-guardian": { type: "boolean" },
+              "test-threshold": { type: "string" },
             },
           }),
         catch: localError,
@@ -67,15 +84,47 @@ export const runMcpCli = (
         process.stderr.write(usage);
         return;
       }
+      if (values["base-url"] !== undefined && values["base-url"] !== "") {
+        process.env["OPENAI_BASE_URL"] = values["base-url"];
+      }
+      const testThresholdNum =
+        values["test-threshold"] !== undefined && values["test-threshold"] !== ""
+          ? Number(values["test-threshold"])
+          : values.fast
+            ? 0
+            : undefined;
+      if (
+        testThresholdNum !== undefined &&
+        (!Number.isFinite(testThresholdNum) || testThresholdNum < 0 || testThresholdNum > 100)
+      ) {
+        return yield* Effect.fail(new Error("--test-threshold must be a number between 0 and 100."));
+      }
+      configureModels({
+        model: values.model,
+        minterModel: values["minter-model"],
+        guardianModel: values["guardian-model"],
+        compat: values.compat,
+        fast: values.fast,
+        skipGuardian: values["skip-guardian"],
+      });
       const mode = positionals[0];
       if (positionals.length !== 1 || (mode !== "mint" && mode !== "serve"))
         return yield* Effect.fail(new Error("Choose mint or serve. See --help."));
+      const endpoint =
+        values.endpoint !== undefined && values.endpoint !== ""
+          ? values.endpoint
+          : process.env["POMERADO_ENDPOINT"] !== undefined && process.env["POMERADO_ENDPOINT"] !== ""
+            ? process.env["POMERADO_ENDPOINT"]
+            : undefined;
       const pomerado = {
         ...options,
+        fast: values.fast ?? options.fast,
+        skipGuardian: values["skip-guardian"] ?? options.skipGuardian,
+        testThreshold: testThresholdNum ?? options.testThreshold,
         browser: {
           ...options.browser,
           ...(values.headed === undefined ? {} : { headless: !values.headed }),
-          ...(values.endpoint === undefined ? {} : { endpoint: values.endpoint }),
+          ...(endpoint === undefined ? {} : { endpoint }),
         },
       };
       const directory = values.artifact === undefined ? undefined : resolve(values.artifact);
