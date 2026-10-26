@@ -32,6 +32,36 @@ export let solModel = resolveSolModel();
 export let lunaModel = resolveLunaModel();
 
 let explicitCompatMode: boolean | undefined = undefined;
+let explicitFastMode: boolean | undefined = undefined;
+let explicitSkipGuardian: boolean | undefined = undefined;
+
+/**
+ * Whether fast mode is active (skips Guardian LLM verification and sets test threshold to 0%).
+ */
+export const isFastMode = (): boolean => {
+  if (explicitFastMode !== undefined) return explicitFastMode;
+  const envVal = process.env["POMERADO_FAST"];
+  return envVal === "1" || envVal === "true";
+};
+
+export const setFastMode = (enabled: boolean | undefined): void => {
+  explicitFastMode = enabled;
+};
+
+/**
+ * Whether Guardian LLM verification should be skipped (pass-through allow).
+ */
+export const isSkipGuardian = (): boolean => {
+  if (explicitSkipGuardian !== undefined) return explicitSkipGuardian;
+  const envVal = process.env["POMERADO_SKIP_GUARDIAN"];
+  if (envVal === "1" || envVal === "true") return true;
+  if (envVal === "0" || envVal === "false") return false;
+  return isFastMode();
+};
+
+export const setSkipGuardian = (enabled: boolean | undefined): void => {
+  explicitSkipGuardian = enabled;
+};
 
 /**
  * Whether router compatibility mode is active.
@@ -107,6 +137,8 @@ export const configureModels = (options: {
   readonly minterModel?: string | undefined;
   readonly guardianModel?: string | undefined;
   readonly compat?: boolean | undefined;
+  readonly fast?: boolean | undefined;
+  readonly skipGuardian?: boolean | undefined;
 }): void => {
   if (options.minterModel !== undefined && options.minterModel !== "") {
     solModel = options.minterModel;
@@ -121,6 +153,12 @@ export const configureModels = (options: {
   if (options.compat !== undefined) {
     setCompatMode(options.compat);
   }
+  if (options.fast !== undefined) {
+    setFastMode(options.fast);
+  }
+  if (options.skipGuardian !== undefined) {
+    setSkipGuardian(options.skipGuardian);
+  }
 };
 
 /**
@@ -130,4 +168,6 @@ export const resetModels = (): void => {
   solModel = resolveSolModel();
   lunaModel = resolveLunaModel();
   explicitCompatMode = undefined;
+  explicitFastMode = undefined;
+  explicitSkipGuardian = undefined;
 };

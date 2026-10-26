@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { Ajv } from "@modelcontextprotocol/server/validators/ajv";
 import { Clock, Effect, Either, Schema } from "effect";
 import { outputCheckMeaning, outputChecks, type OutputCheck } from "../runtime/output-lint.js";
+import { isFastMode } from "../models/models.js";
 
 /**
  * Live tests of a read: the cases the minting agent designs in `test/cases.json`, each case's
@@ -1301,8 +1302,31 @@ export const liveTestsEvidence = (options: {
  * before the harness sends a read's publication to review. Below it the review would hold
  * publication back on the failing cases anyway, so it is not started. The bar sits below every
  * case so that a case that is itself wrong, and not yet corrected, does not hold back the rest.
+ *
+ * Configurable via POMERADO_TEST_THRESHOLD environment variable, or automatically 0% in fast mode.
  */
-export const reviewPassPercent = 70;
+const defaultPassPercent = 70;
+
+const resolveReviewPassPercent = (): number => {
+  const envVal = process.env["POMERADO_TEST_THRESHOLD"];
+  if (envVal !== undefined && envVal !== "") {
+    const parsed = Number(envVal);
+    if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) return parsed;
+  }
+  return isFastMode() ? 0 : defaultPassPercent;
+};
+
+export let reviewPassPercent = resolveReviewPassPercent();
+
+export const setReviewPassPercent = (percent: number | undefined): void => {
+  if (percent !== undefined && Number.isFinite(percent) && percent >= 0 && percent <= 100) {
+    reviewPassPercent = percent;
+  }
+};
+
+export const resetReviewPassPercent = (): void => {
+  reviewPassPercent = resolveReviewPassPercent();
+};
 
 /** The published version, when its live tests on its source pass below `reviewPassPercent`. */
 export interface LiveTestsShortfall {

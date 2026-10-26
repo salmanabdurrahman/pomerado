@@ -23,6 +23,12 @@ export interface PomeradoOptions {
   readonly outcomeReviewerProvider?: ModelProvider;
   readonly policy?: string;
   readonly timeoutMs?: number;
+  /** Whether to run in fast mode (zero-LLM Guardian pass-through + 0% test threshold). */
+  readonly fast?: boolean | undefined;
+  /** Whether to skip Guardian LLM reviews (zero-LLM pass-through). */
+  readonly skipGuardian?: boolean | undefined;
+  /** Live test pass threshold percentage (0-100). */
+  readonly testThreshold?: number | undefined;
   /**
    * Files a run places and collects. A caller names its own file by a `file:` URL in the input.
    * A run keeps each downloaded file for 30 minutes and returns its `file:` URL: under

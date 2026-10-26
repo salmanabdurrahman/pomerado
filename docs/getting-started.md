@@ -51,14 +51,17 @@ By default, Pomerado uses internal OpenAI model IDs for minting and Guardian ver
 - `POMERADO_MINTER_MODEL` or `--minter-model NAME`: Overrides the model used by the minter agent (default: `gpt-6.1-sol`).
 - `POMERADO_GUARDIAN_MODEL` or `--guardian-model NAME`: Overrides the model used by the Guardian reviewer (default: `gpt-6-luna`).
 - `POMERADO_COMPAT_MODE` or `--compat`: Toggles compatibility mode. When enabled, proprietary OpenAI Responses API parameters (such as `reasoning: { summary }`, `reasoning.encrypted_content` include flags, `prompt_cache_options`, cache breakpoints, and `tool_choice.type="allowed_tools"`) are sanitized so standard OpenAI-compatible endpoints do not return 400 Bad Request.
+- `POMERADO_FAST` or `--fast`: Enables fast mode. Skips Guardian LLM reviews (zero LLM calls for verification) and sets live test pass threshold to 0%, cutting token usage by 50-70% and accelerating minting.
+- `POMERADO_SKIP_GUARDIAN` or `--skip-guardian`: Skips Guardian LLM reviews independently without changing the live test threshold.
+- `POMERADO_TEST_THRESHOLD` or `--test-threshold N`: Sets the required live test pass rate percentage (0-100, default 70).
 
-Example using custom models with a 9router gateway:
+Example using custom models with 9router in fast mode:
 ```sh
 pomerado-mcp mint --root ~/pomerado-integrations \
   --base-url "https://api.9router.com/v1" \
-  --minter-model "gpt-4o" \
-  --guardian-model "gpt-4o-mini" \
-  --compat
+  --model "gpt-4o" \
+  --compat \
+  --fast
 ```
 
 ## Client settings

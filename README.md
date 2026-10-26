@@ -73,7 +73,7 @@ Pomerado runs as a standard MCP stdio server. Clients that read an `mcpServers` 
 - `--root` sets the folder where Pomerado saves your integrations. Use an absolute path, because each client starts servers from its own working folder
 - The server reads `OPENAI_API_KEY` from its environment, so the key never needs to appear in chat
 - Starting the server and listing its tools costs nothing. It launches no browser and calls no model until you start a mint
-- Custom models and OpenAI-compatible routers (such as 9router or LiteLLM) can be configured via environment variables (`OPENAI_BASE_URL`, `POMERADO_MINTER_MODEL`, `POMERADO_GUARDIAN_MODEL`, `POMERADO_MODEL`, `POMERADO_COMPAT_MODE`) or CLI flags (`--base-url`, `--model`, `--minter-model`, `--guardian-model`, `--compat`)
+- Custom models and OpenAI-compatible routers (such as 9router or LiteLLM) can be configured via environment variables (`OPENAI_BASE_URL`, `POMERADO_MINTER_MODEL`, `POMERADO_GUARDIAN_MODEL`, `POMERADO_MODEL`, `POMERADO_COMPAT_MODE`, `POMERADO_FAST`, `POMERADO_SKIP_GUARDIAN`, `POMERADO_TEST_THRESHOLD`) or CLI flags (`--base-url`, `--model`, `--minter-model`, `--guardian-model`, `--compat`, `--fast`, `--skip-guardian`, `--test-threshold`)
 
 Add Pomerado to your client with the command or file below.
 

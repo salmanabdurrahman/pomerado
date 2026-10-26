@@ -25,6 +25,9 @@ Options
   --minter-model NAME      Model for minter (or set POMERADO_MINTER_MODEL)
   --guardian-model NAME    Model for Guardian (or set POMERADO_GUARDIAN_MODEL)
   --compat                 Enable compatibility mode for custom routers (strips proprietary reasoning/cache)
+  --fast                   Fast mode: skip Guardian verification and set test threshold to 0%
+  --skip-guardian          Skip Guardian verification without altering test threshold
+  --test-threshold N       Live test pass threshold percentage (0-100, default 70)
 
 The mint root defaults to ./integrations. Supply model credentials in the environment to
 mint. Serving makes no model request and needs no model credentials.
@@ -70,6 +73,9 @@ export const runMcpCli = (
               "minter-model": { type: "string" },
               "guardian-model": { type: "string" },
               compat: { type: "boolean" },
+              fast: { type: "boolean" },
+              "skip-guardian": { type: "boolean" },
+              "test-threshold": { type: "string" },
             },
           }),
         catch: localError,
@@ -81,17 +87,34 @@ export const runMcpCli = (
       if (values["base-url"] !== undefined && values["base-url"] !== "") {
         process.env["OPENAI_BASE_URL"] = values["base-url"];
       }
+      const testThresholdNum =
+        values["test-threshold"] !== undefined && values["test-threshold"] !== ""
+          ? Number(values["test-threshold"])
+          : values.fast
+            ? 0
+            : undefined;
+      if (
+        testThresholdNum !== undefined &&
+        (!Number.isFinite(testThresholdNum) || testThresholdNum < 0 || testThresholdNum > 100)
+      ) {
+        return yield* Effect.fail(new Error("--test-threshold must be a number between 0 and 100."));
+      }
       configureModels({
         model: values.model,
         minterModel: values["minter-model"],
         guardianModel: values["guardian-model"],
         compat: values.compat,
+        fast: values.fast,
+        skipGuardian: values["skip-guardian"],
       });
       const mode = positionals[0];
       if (positionals.length !== 1 || (mode !== "mint" && mode !== "serve"))
         return yield* Effect.fail(new Error("Choose mint or serve. See --help."));
       const pomerado = {
         ...options,
+        fast: values.fast ?? options.fast,
+        skipGuardian: values["skip-guardian"] ?? options.skipGuardian,
+        testThreshold: testThresholdNum ?? options.testThreshold,
         browser: {
           ...options.browser,
           ...(values.headed === undefined ? {} : { headless: !values.headed }),

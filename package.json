@@ -231,6 +231,11 @@
       "import": "./dist/typescript/src/filesystem/read.js",
       "default": "./dist/typescript/src/filesystem/read.js"
     },
+    "./core/guardian/fast-reviewer": {
+      "types": "./dist/typescript/src/guardian/fast-reviewer.d.ts",
+      "import": "./dist/typescript/src/guardian/fast-reviewer.js",
+      "default": "./dist/typescript/src/guardian/fast-reviewer.js"
+    },
     "./core/guardian/model": {
       "types": "./dist/typescript/src/guardian/model.d.ts",
       "import": "./dist/typescript/src/guardian/model.js",

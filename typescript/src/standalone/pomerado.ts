@@ -6,6 +6,7 @@ import { mintRequest } from "./mint-host.js";
 import { runOperation } from "./run-operation.js";
 import { issueFileHandles } from "../mint/file-handles.js";
 import { isLocalFileReference, openLocalFile } from "../execution/local-files.js";
+import { resetReviewPassPercent } from "../mint/live-tests.js";
 export { Artifact } from "./contracts.js";
 export type {
   Pomerado,
@@ -35,7 +36,7 @@ export const createPomerado = (
             const context = yield* requestContext(session, handled);
             return yield* mintRequest(session, context, handled, issued.handles);
           }),
-        ),
+        ).pipe(Effect.ensuring(Effect.sync(resetReviewPassPercent))),
       );
     const run: Pomerado["run"] = (artifact, request) =>
       session.mutex.withPermits(1)(Effect.scoped(runOperation(session, artifact, request)));
