@@ -9,6 +9,7 @@ import { localError, localPromise } from "../execution/local-path.js";
 import { readIntegration } from "./artifact-files.js";
 import { prepareIntegration } from "./mcp-package.js";
 import { makeIntegrationMcp, makePomeradoMcp } from "./mcp-server.js";
+import { configureModels } from "../models/models.js";
 import type { PomeradoOptions } from "./contracts.js";
 
 const usage = `Pomerado MCP
@@ -17,8 +18,12 @@ const usage = `Pomerado MCP
   pomerado-mcp serve --artifact DIRECTORY
 
 Options
-  --endpoint URL     Attach to native Playwright
-  --headed           Show local Chromium
+  --endpoint URL           Attach to native Playwright
+  --headed                 Show local Chromium
+  --base-url URL           OpenAI-compatible API base URL (or set OPENAI_BASE_URL)
+  --model NAME             Default model for both minter and Guardian (or set POMERADO_MODEL)
+  --minter-model NAME      Model for minter (or set POMERADO_MINTER_MODEL)
+  --guardian-model NAME    Model for Guardian (or set POMERADO_GUARDIAN_MODEL)
 
 The mint root defaults to ./integrations. Supply model credentials in the environment to
 mint. Serving makes no model request and needs no model credentials.
@@ -59,6 +64,10 @@ export const runMcpCli = (
               artifact: { type: "string" },
               endpoint: { type: "string" },
               headed: { type: "boolean" },
+              "base-url": { type: "string" },
+              model: { type: "string" },
+              "minter-model": { type: "string" },
+              "guardian-model": { type: "string" },
             },
           }),
         catch: localError,
@@ -67,6 +76,14 @@ export const runMcpCli = (
         process.stderr.write(usage);
         return;
       }
+      if (values["base-url"] !== undefined && values["base-url"] !== "") {
+        process.env["OPENAI_BASE_URL"] = values["base-url"];
+      }
+      configureModels({
+        model: values.model,
+        minterModel: values["minter-model"],
+        guardianModel: values["guardian-model"],
+      });
       const mode = positionals[0];
       if (positionals.length !== 1 || (mode !== "mint" && mode !== "serve"))
         return yield* Effect.fail(new Error("Choose mint or serve. See --help."));

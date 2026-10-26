@@ -10,6 +10,7 @@ import { createPomerado } from "./pomerado.js";
 import type { PomeradoOptions } from "./contracts.js";
 import { RunOutcomeFailure } from "./run-report.js";
 import { makeTerminalAsker } from "../inputs/terminal.js";
+import { configureModels } from "../models/models.js";
 
 const usage = `Pomerado
 
@@ -17,10 +18,14 @@ const usage = `Pomerado
   pomerado run --artifact DIRECTORY --url URL [--input JSON]
 
 Options
-  --endpoint URL          Attach to a native Playwright websocket endpoint
-  --headed                Show locally launched Chromium
+  --endpoint URL           Attach to a native Playwright websocket endpoint
+  --headed                 Show locally launched Chromium
   --effect read|write|ask  Mint authority (default ask)
   --timeout-seconds N      Session budget (default 1200)
+  --base-url URL           OpenAI-compatible API base URL (or set OPENAI_BASE_URL)
+  --model NAME             Default model for both minter and Guardian (or set POMERADO_MODEL)
+  --minter-model NAME      Model for minter (or set POMERADO_MINTER_MODEL)
+  --guardian-model NAME    Model for Guardian (or set POMERADO_GUARDIAN_MODEL)
 
 Set OPENAI_API_KEY before minting. A run makes no model request and needs no key.
 A run ignores --intent and --effect. Questions are asked in this terminal.
@@ -55,6 +60,10 @@ const readOptions = (args: readonly string[]) =>
           headed: { type: "boolean" },
           effect: { type: "string" },
           "timeout-seconds": { type: "string" },
+          "base-url": { type: "string" },
+          model: { type: "string" },
+          "minter-model": { type: "string" },
+          "guardian-model": { type: "string" },
         },
       }),
     );
@@ -104,6 +113,14 @@ const runCli = (
         return;
       }
       const { values, command, timeoutMs, request } = options;
+      if (values["base-url"] !== undefined && values["base-url"] !== "") {
+        process.env["OPENAI_BASE_URL"] = values["base-url"];
+      }
+      configureModels({
+        model: values.model,
+        minterModel: values["minter-model"],
+        guardianModel: values["guardian-model"],
+      });
       const pomerado = yield* createPomerado({
         ...overrides,
         ask: makeTerminalAsker(),

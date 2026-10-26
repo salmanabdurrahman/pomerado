@@ -6,7 +6,7 @@ This guide installs Pomerado, connects it to your MCP client and builds a first 
 
 - macOS or Linux.
 - Node 24.21 or a later Node 24 release. `node --version` should print `v24.21.0` or higher, below `v25`.
-- An OpenAI API key for an account that can use `gpt-6.1-sol` and `gpt-6-luna`. Pomerado calls OpenAI models to build and review integrations. Your agent can run on any model.
+- An OpenAI API key for an account that can use `gpt-6.1-sol` and `gpt-6-luna`, or an OpenAI-compatible router key (such as 9router, OpenRouter, LiteLLM) with custom models configured. Pomerado calls models to build and review integrations. Your agent can run on any model.
 - An MCP client that runs local stdio servers.
 
 ## Install
@@ -41,6 +41,23 @@ Pomerado is a standard MCP stdio server.
 - `--root` is the folder where Pomerado saves them. It defaults to `./integrations` in the server's working folder, and clients pick that folder differently. Use an absolute path.
 - The server needs `OPENAI_API_KEY` in its environment. Many clients pass servers only a short list of variables, so check your client below.
 - Starting the server and listing its tools launches no browser and calls no model.
+
+### Custom models and OpenAI-compatible routers
+
+By default, Pomerado uses internal OpenAI model IDs for minting and Guardian verification. You can direct Pomerado to any OpenAI-compatible gateway or router (such as 9router, OpenRouter, or LiteLLM) and customize the models used:
+
+- `OPENAI_BASE_URL` or `--base-url URL`: Sets the OpenAI-compatible API base URL (e.g. `https://api.9router.com/v1`).
+- `POMERADO_MODEL` or `--model NAME`: Sets the default model for both the minter and Guardian reviewer.
+- `POMERADO_MINTER_MODEL` or `--minter-model NAME`: Overrides the model used by the minter agent (default: `gpt-6.1-sol`).
+- `POMERADO_GUARDIAN_MODEL` or `--guardian-model NAME`: Overrides the model used by the Guardian reviewer (default: `gpt-6-luna`).
+
+Example using custom models:
+```sh
+pomerado-mcp mint --root ~/pomerado-integrations \
+  --base-url "https://api.9router.com/v1" \
+  --minter-model "gpt-4o" \
+  --guardian-model "gpt-4o-mini"
+```
 
 ## Client settings
 
