@@ -18,7 +18,7 @@ const usage = `Pomerado
   pomerado run --artifact DIRECTORY --url URL [--input JSON]
 
 Options
-  --endpoint URL           Attach to a native Playwright websocket endpoint
+  --endpoint URL           Attach to a native Playwright websocket endpoint (or set POMERADO_ENDPOINT)
   --headed                 Show locally launched Chromium
   --effect read|write|ask  Mint authority (default ask)
   --timeout-seconds N      Session budget (default 1200)
@@ -144,6 +144,12 @@ const runCli = (
         fast: values.fast,
         skipGuardian: values["skip-guardian"],
       });
+      const endpoint =
+        values.endpoint !== undefined && values.endpoint !== ""
+          ? values.endpoint
+          : process.env["POMERADO_ENDPOINT"] !== undefined && process.env["POMERADO_ENDPOINT"] !== ""
+            ? process.env["POMERADO_ENDPOINT"]
+            : undefined;
       const pomerado = yield* createPomerado({
         ...overrides,
         ask: makeTerminalAsker(),
@@ -153,7 +159,7 @@ const runCli = (
         testThreshold: testThresholdNum ?? overrides.testThreshold,
         browser: {
           headless: !values.headed,
-          ...(values.endpoint === undefined ? {} : { endpoint: values.endpoint }),
+          ...(endpoint === undefined ? {} : { endpoint }),
         },
       });
       if (command === "run") {

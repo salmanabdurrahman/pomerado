@@ -18,7 +18,7 @@ const usage = `Pomerado MCP
   pomerado-mcp serve --artifact DIRECTORY
 
 Options
-  --endpoint URL           Attach to native Playwright
+  --endpoint URL           Attach to native Playwright (or set POMERADO_ENDPOINT)
   --headed                 Show local Chromium
   --base-url URL           OpenAI-compatible API base URL (or set OPENAI_BASE_URL)
   --model NAME             Default model for both minter and Guardian (or set POMERADO_MODEL)
@@ -110,6 +110,12 @@ export const runMcpCli = (
       const mode = positionals[0];
       if (positionals.length !== 1 || (mode !== "mint" && mode !== "serve"))
         return yield* Effect.fail(new Error("Choose mint or serve. See --help."));
+      const endpoint =
+        values.endpoint !== undefined && values.endpoint !== ""
+          ? values.endpoint
+          : process.env["POMERADO_ENDPOINT"] !== undefined && process.env["POMERADO_ENDPOINT"] !== ""
+            ? process.env["POMERADO_ENDPOINT"]
+            : undefined;
       const pomerado = {
         ...options,
         fast: values.fast ?? options.fast,
@@ -118,7 +124,7 @@ export const runMcpCli = (
         browser: {
           ...options.browser,
           ...(values.headed === undefined ? {} : { headless: !values.headed }),
-          ...(values.endpoint === undefined ? {} : { endpoint: values.endpoint }),
+          ...(endpoint === undefined ? {} : { endpoint }),
         },
       };
       const directory = values.artifact === undefined ? undefined : resolve(values.artifact);

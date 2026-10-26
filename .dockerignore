@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.github
+.jobs
+integrations
+pomerado-integrations
+.env
+.env.*
+*.log
+.DS_Store
+coverage

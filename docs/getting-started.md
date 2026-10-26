@@ -54,6 +54,7 @@ By default, Pomerado uses internal OpenAI model IDs for minting and Guardian ver
 - `POMERADO_FAST` or `--fast`: Enables fast mode. Skips Guardian LLM reviews (zero LLM calls for verification) and sets live test pass threshold to 0%, cutting token usage by 50-70% and accelerating minting.
 - `POMERADO_SKIP_GUARDIAN` or `--skip-guardian`: Skips Guardian LLM reviews independently without changing the live test threshold.
 - `POMERADO_TEST_THRESHOLD` or `--test-threshold N`: Sets the required live test pass rate percentage (0-100, default 70).
+- `POMERADO_ENDPOINT` or `--endpoint URL`: Attaches to a remote Playwright websocket endpoint (e.g. `ws://browserless:3000?token=...`).
 
 Example using custom models with 9router in fast mode:
 ```sh
