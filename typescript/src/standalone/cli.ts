@@ -26,6 +26,7 @@ Options
   --model NAME             Default model for both minter and Guardian (or set POMERADO_MODEL)
   --minter-model NAME      Model for minter (or set POMERADO_MINTER_MODEL)
   --guardian-model NAME    Model for Guardian (or set POMERADO_GUARDIAN_MODEL)
+  --compat                 Enable compatibility mode for custom routers (strips proprietary reasoning/cache)
 
 Set OPENAI_API_KEY before minting. A run makes no model request and needs no key.
 A run ignores --intent and --effect. Questions are asked in this terminal.
@@ -64,6 +65,7 @@ const readOptions = (args: readonly string[]) =>
           model: { type: "string" },
           "minter-model": { type: "string" },
           "guardian-model": { type: "string" },
+          compat: { type: "boolean" },
         },
       }),
     );
@@ -120,6 +122,7 @@ const runCli = (
         model: values.model,
         minterModel: values["minter-model"],
         guardianModel: values["guardian-model"],
+        compat: values.compat,
       });
       const pomerado = yield* createPomerado({
         ...overrides,

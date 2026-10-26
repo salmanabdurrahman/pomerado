@@ -89,7 +89,7 @@ Add this entry to the client's `mcpServers` file, in the place [Client settings]
 ## 5. Ask the user to provide the key
 
 - Tell the user the server needs `OPENAI_API_KEY` in its environment, and that Pomerado calls OpenAI models to build and review integrations.
-- If using an OpenAI-compatible proxy (such as 9router or LiteLLM), the user can also set `OPENAI_BASE_URL` and custom models via `POMERADO_MODEL` (or `--base-url`, `--model`).
+- If using an OpenAI-compatible proxy (such as 9router or LiteLLM), the user can also set `OPENAI_BASE_URL` and custom models via `POMERADO_MODEL` (or `--base-url`, `--model`, `--compat`, or `POMERADO_COMPAT_MODE=1`).
 - Ask the user to set the key themselves, in their shell profile or the client's own key setting. Point them to their client in [Client settings](getting-started.md#client-settings).
 - Tell the user not to paste the key into chat.
 - Claude Desktop documents no way to reference a variable. Tell the user the key would sit as plain text in the entry's `env` block. If they accept that, they add the key to the `env` block themselves.

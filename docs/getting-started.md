@@ -46,17 +46,19 @@ Pomerado is a standard MCP stdio server.
 
 By default, Pomerado uses internal OpenAI model IDs for minting and Guardian verification. You can direct Pomerado to any OpenAI-compatible gateway or router (such as 9router, OpenRouter, or LiteLLM) and customize the models used:
 
-- `OPENAI_BASE_URL` or `--base-url URL`: Sets the OpenAI-compatible API base URL (e.g. `https://api.9router.com/v1`).
+- `OPENAI_BASE_URL` or `--base-url URL`: Sets the OpenAI-compatible API base URL (e.g. `https://api.9router.com/v1`). Setting a non-OpenAI base URL automatically enables router compatibility mode.
 - `POMERADO_MODEL` or `--model NAME`: Sets the default model for both the minter and Guardian reviewer.
 - `POMERADO_MINTER_MODEL` or `--minter-model NAME`: Overrides the model used by the minter agent (default: `gpt-6.1-sol`).
 - `POMERADO_GUARDIAN_MODEL` or `--guardian-model NAME`: Overrides the model used by the Guardian reviewer (default: `gpt-6-luna`).
+- `POMERADO_COMPAT_MODE` or `--compat`: Toggles compatibility mode. When enabled, proprietary OpenAI Responses API parameters (such as `reasoning: { summary }`, `reasoning.encrypted_content` include flags, `prompt_cache_options`, cache breakpoints, and `tool_choice.type="allowed_tools"`) are sanitized so standard OpenAI-compatible endpoints do not return 400 Bad Request.
 
-Example using custom models:
+Example using custom models with a 9router gateway:
 ```sh
 pomerado-mcp mint --root ~/pomerado-integrations \
   --base-url "https://api.9router.com/v1" \
   --minter-model "gpt-4o" \
-  --guardian-model "gpt-4o-mini"
+  --guardian-model "gpt-4o-mini" \
+  --compat
 ```
 
 ## Client settings

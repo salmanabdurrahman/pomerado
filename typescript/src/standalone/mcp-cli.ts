@@ -24,6 +24,7 @@ Options
   --model NAME             Default model for both minter and Guardian (or set POMERADO_MODEL)
   --minter-model NAME      Model for minter (or set POMERADO_MINTER_MODEL)
   --guardian-model NAME    Model for Guardian (or set POMERADO_GUARDIAN_MODEL)
+  --compat                 Enable compatibility mode for custom routers (strips proprietary reasoning/cache)
 
 The mint root defaults to ./integrations. Supply model credentials in the environment to
 mint. Serving makes no model request and needs no model credentials.
@@ -68,6 +69,7 @@ export const runMcpCli = (
               model: { type: "string" },
               "minter-model": { type: "string" },
               "guardian-model": { type: "string" },
+              compat: { type: "boolean" },
             },
           }),
         catch: localError,
@@ -83,6 +85,7 @@ export const runMcpCli = (
         model: values.model,
         minterModel: values["minter-model"],
         guardianModel: values["guardian-model"],
+        compat: values.compat,
       });
       const mode = positionals[0];
       if (positionals.length !== 1 || (mode !== "mint" && mode !== "serve"))

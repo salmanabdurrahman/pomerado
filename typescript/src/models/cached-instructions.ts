@@ -5,6 +5,7 @@ import type {
   ModelResponse,
   Usage,
 } from "@openai/agents";
+import { isDeveloperRoleDisabled, isPromptCacheDisabled } from "./models.js";
 
 /**
  * How long the provider keeps a prompt cache write: 30 minutes, its default, or 12 hours, which
@@ -23,22 +24,25 @@ export interface InstructionsMessage {
  * A developer message as the Responses API takes it. The SDK has no developer role, so the item
  * travels as an unknown item, which its converter sends unchanged.
  */
-export const developerMessage = ({ text, breakpoint }: InstructionsMessage): AgentInputItem => ({
-  type: "unknown",
-  providerData: {
-    type: "message",
-    role: "developer",
-    content: [
-      {
-        type: "input_text",
-        text,
-        ...(breakpoint === undefined
-          ? {}
-          : { prompt_cache_breakpoint: { mode: "explicit", ttl: breakpoint } }),
-      },
-    ],
-  },
-});
+export const developerMessage = ({ text, breakpoint }: InstructionsMessage): AgentInputItem => {
+  const includeBreakpoint = breakpoint !== undefined && !isPromptCacheDisabled();
+  return {
+    type: "unknown",
+    providerData: {
+      type: "message",
+      role: isDeveloperRoleDisabled() ? "system" : "developer",
+      content: [
+        {
+          type: "input_text",
+          text,
+          ...(includeBreakpoint
+            ? { prompt_cache_breakpoint: { mode: "explicit", ttl: breakpoint } }
+            : {}),
+        },
+      ],
+    },
+  };
+};
 
 /**
  * A model provider that sends an agent's instructions as developer messages at the start of each
@@ -186,7 +190,7 @@ export const withCacheComparison = (
   request: ModelRequest,
   responseId: string | undefined,
 ): ModelRequest => {
-  if (responseId === undefined) return request;
+  if (responseId === undefined || isPromptCacheDisabled()) return request;
   const settings = request.modelSettings;
   const options: unknown = settings.providerData?.["prompt_cache_options"];
   return {
